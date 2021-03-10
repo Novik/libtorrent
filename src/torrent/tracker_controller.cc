@@ -132,7 +132,10 @@ TrackerController::seconds_to_next_scrape() const {
 void
 TrackerController::manual_request(bool request_now) {
   if (!m_private->task_timeout.is_queued())
+  {
+    LT_LOG_TRACKER(INFO, "!m_private->task_timeout.is_queued()", 0); 
     return;
+  }
 
   // Add functions to get the lowest timeout, etc...
   send_update_event();
@@ -260,10 +263,16 @@ TrackerController::send_completed_event() {
 void
 TrackerController::send_update_event() {
   if (!(m_flags & flag_active) || !m_tracker_list->has_usable())
+  {
+    LT_LOG_TRACKER(INFO, "!(m_flags & flag_active) || !m_tracker_list->has_usable()", 0); 
     return;
+  }  
 
   if ((m_flags & mask_send) && m_tracker_list->has_active())
+  {
+    LT_LOG_TRACKER(INFO, "(m_flags & mask_send) && m_tracker_list->has_active()", 0); 
     return;
+  }  
 
   // We can lose a state here...
   if (!(m_flags & mask_send))
