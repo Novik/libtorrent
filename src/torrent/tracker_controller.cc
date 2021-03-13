@@ -66,11 +66,17 @@ TrackerController::update_timeout(uint32_t seconds_to_next) {
 
   rak::timer next_timeout = cachedTime;
 
+  LT_LOG_TRACKER(INFO, "update_timeout seconds_to_next: %u was timeout: %u", seconds_to_next, m_private->task_timeout.time().seconds(), 0);
+
   if (seconds_to_next != 0)
     next_timeout = (cachedTime + rak::timer::from_seconds(seconds_to_next)).round_seconds();
 
+  LT_LOG_TRACKER(INFO, "priority_queue_erase1", 0);
   priority_queue_erase(&taskScheduler, &m_private->task_timeout);
+  LT_LOG_TRACKER(INFO, "priority_queue_insert", 0);
   priority_queue_insert(&taskScheduler, &m_private->task_timeout, next_timeout);
+
+  LT_LOG_TRACKER(INFO, "update_timeout now timeout: %u", m_private->task_timeout.time().seconds(), 0);
 }
 
 inline int
@@ -94,6 +100,7 @@ TrackerController::TrackerController(TrackerList* trackers) :
 }
 
 TrackerController::~TrackerController() {
+  LT_LOG_TRACKER(INFO, "priority_queue_erase2", 0);
   priority_queue_erase(&taskScheduler, &m_private->task_timeout);
   priority_queue_erase(&taskScheduler, &m_private->task_scrape);
   delete m_private;
@@ -133,7 +140,7 @@ void
 TrackerController::manual_request(bool request_now) {
   if (!m_private->task_timeout.is_queued())
   {
-    LT_LOG_TRACKER(INFO, "!m_private->task_timeout.is_queued()", 0); 
+    LT_LOG_TRACKER(INFO, "!m_private->task_timeout.is_queued() for %u", m_private->task_timeout.time().seconds(), 0); 
     return;
   }
 
@@ -295,6 +302,7 @@ TrackerController::close(int flags) {
     m_tracker_list->disown_all_including(close_disown_stop | close_disown_completed);
 
   m_tracker_list->close_all();
+  LT_LOG_TRACKER(INFO, "priority_queue_erase3", 0);
   priority_queue_erase(&taskScheduler, &m_private->task_timeout);
 }
 
@@ -329,6 +337,7 @@ TrackerController::disable() {
   m_flags &= ~(flag_active | flag_requesting | flag_promiscuous_mode);
 
   m_tracker_list->close_all_excluding((1 << Tracker::EVENT_STOPPED) | (1 << Tracker::EVENT_COMPLETED));
+  LT_LOG_TRACKER(INFO, "priority_queue_erase4", 0);
   priority_queue_erase(&taskScheduler, &m_private->task_timeout);
 
   LT_LOG_TRACKER(INFO, "Called disable with %u trackers.", m_tracker_list->size());
@@ -442,6 +451,7 @@ TrackerController::do_timeout() {
   if (!(m_flags & flag_active) || !m_tracker_list->has_usable())
     return;
 
+  LT_LOG_TRACKER(INFO, "priority_queue_erase5", 0);
   priority_queue_erase(&taskScheduler, &m_private->task_timeout);
 
   int send_state = current_send_state();
